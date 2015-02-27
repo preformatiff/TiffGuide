@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="LIBIS/AWare conformance checker for TIFF">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>LIBIS/AWare conformance checker&#58; Functional analysis</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/preformatiff/TiffGuide">View on GitHub</a>
+
+          <h1 id="project_title">LIBIS/AWare conformance checker&#58; Functional analysis</h1>
+          <h2 id="project_tagline"></h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+    <div class="inner">
+	<p>Download <a href="functionalAnalysis.html">Functional analysis</a>&#58; (<a href="images/PreformaFunctionalAnalysis.odt">odt</a>/<a href="images/PreformaFunctionalAnalysis.pdf">pdf</a>)</p>
+	<p>Download <a href="technicalDesign.html">Technical design</a>&#58; (<a href="images/PreformaTechnicalDesign.odt">odt</a>/<a href="images/PreformaTechnicalDesign.pdf">pdf</a>)</p>
+	<p>Download TIFF specification&#58; (<a href="images/specificationTIFF.odt">odt</a>/<a href="images/specificationTIFF.pdf">pdf</a>)</p>
+	<p>Download <a href="https://github.com/preformatiff/TiffGuide/tree/master/TIFFA%20testfiles">test files</a></p></div>
+    <section id="main_content" class="inner">
+    <h1 id="introduction">Introduction</h1>
+
+<h2 id="functional-analysis">Functional analysis</h2>
+
+<p>This document describes the detailed functionality of the system. This document
+need to be read with the Technical design. The details of the technical design
+are not included in the functional analysis.</p>
+
+<p>This document is available under the Attribution-ShareAlike 2.0 Generic (CC BY-SA 2.0)</p>
+
+<h2 id="preforma-project">Preforma project</h2>
+
+<p>The Preforma<sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup> project, PREservation FORMAts for culture
+information/e-archives, is a consortium of 14 partners, with 9 memory
+institutions as partner. The goal of the project is to create a set of tools and
+procedures for gaining full control over the technical properties of digital
+content intended for long-term preservation by memory institutions.</p>
+
+<p>The project consists of 6 vendors creating different conformance checkers.</p>
+
+<h2 id="libisaware-conformance-checker2">LIBIS/AWare conformance checker<sup id="fnref:2"><a href="#fn:2" class="footnote">2</a></sup></h2>
+
+<p>The LIBIS/AWare conformance checker checks the implementation of TIFF/EP and
+TIFF/IT files according to the specification ISO 12234-2 (TIFF/EP) and ISO 12639
+(TIFF/IT). The conformance checker also has a policy checker, metadata fixer and
+reporting module.</p>
+
+<p><img src="images/preformaConformanceChecker.png" alt="" /></p>
+
+<p>The policy checker will do extra checks based on the preservation policy of an
+organization. For example, the TIFF standard lets you included different color
+profiles, but the policy of an institution could be to only allow for example
+the ECI color profiles, because this is a standard color profile.</p>
+
+<p>The metadata fixer will allow a user to correct some mistakes in the embedded
+metadata.</p>
+
+<p>The reporter module generates reports about the Implementation checker and
+policy checker</p>
+
+<p>The LIBIS/AWare conformance checker will implement all the functionality as
+specified in the Preforma requirements<sup id="fnref:3"><a href="#fn:3" class="footnote">3</a></sup>, but we will add functionality to it
+as well. For the conformance checker we will define a preservation-safe
+TIFF/A<sup id="fnref:4"><a href="#fn:4" class="footnote">4</a></sup>. This is a subset of the TIFF standard with extra specification of
+elements that are not clear in the TIFF standard and elements that will hinder
+preservation are removed. The intention is to discuss this with ISO to update
+the TIFF standard during the next phases.</p>
+
+<p>Also the policy checker will be extended. With our tool the use can create a
+full preservation policy according to the SCAPE Preservation policy Framework.
+To help the user specify a preservation policy we will also import the SCAPE
+preservation policies.</p>
+
+<p>An extra module we will add is the test framework. This will be used to test the
+conformance checker during development, but it can be for example used by
+developers to test if their TIFF files validate against Ground truth files.
+These Ground truth files describe the TIFF files as they should be according to
+the standard or TIFF/A, a developer can evaluate the difference in conformance
+between the files in the Ground truth and the same files with new software or
+new version of existing software.</p>
+
+<p><img src="images/functionalArchitecture.png" alt="" /></p>
+
+<h1 id="conformance-checker">Conformance checker</h1>
+
+<h2 id="diagram">Diagram</h2>
+
+<p><img src="images/ConformanceChecker.png" alt="" /></p>
+
+<h2 id="use-cases">Use cases</h2>
+
+<h3 id="login">Login</h3>
+
+<ul>
+  <li>
+    <p>When a user opens the application, the system responds by opening the
+login windows.</p>
+  </li>
+  <li>
+    <p>When a user fills in username and password and press login, the system
+responds by opening the home screen, where the user can select the
+different options:</p>
+
+    <ol>
+      <li>
+        <p>Upload files</p>
+      </li>
+      <li>
+        <p>Manage the users settings</p>
+      </li>
+      <li>
+        <p>Open existing reports</p>
+      </li>
+      <li>
+        <p>Create a preservation policy</p>
+      </li>
+      <li>
+        <p>Change system settings</p>
+      </li>
+      <li>
+        <p>Administer the system (if the user is an administrator)</p>
+      </li>
+    </ol>
+  </li>
+</ul>
+
+<h3 id="upload-files">Upload files</h3>
+
+<ul>
+  <li>
+    <p>When the user select upload files, the system responds by opening the
+file upload window.</p>
+  </li>
+  <li>
+    <p>When the user selects the files or the directory to upload, the system
+responds by:</p>
+
+    <ol>
+      <li>
+        <p>creating a new package</p>
+      </li>
+      <li>
+        <p>uploading the files and the directory structure to the server. When
+the system detects it is running locally, then the upload process is
+a copy process</p>
+      </li>
+      <li>
+        <p>While uploading the files the system also calculates a MD5 checksum
+on the local system and verifies the checksum to see if the files
+are transferred properly. The files will be uploaded in chunks and
+for every chunk the checksum is checked. When the upload is
+finished, the checksum is also checked.</p>
+      </li>
+      <li>
+        <p>Adding the file references to the database</p>
+      </li>
+    </ol>
+  </li>
+  <li>
+    <p>When the upload process is finished, the user can click on Check the
+conformance or check policy.</p>
+  </li>
+</ul>
+
+<h3 id="checking-the-file-conformance-ui">Checking the file conformance (UI)</h3>
+
+<ul>
+  <li>
+    <p>When the user selects check the conformance, the system responds by opening
+the window to select a package.</p>
+  </li>
+  <li>
+    <p>The user selects a package in the UI. The system responds by loading the
+package. If the user clicks on new package, the upload files window is
+loaded.</p>
+  </li>
+  <li>
+    <p>If the user selects analyze file, the system responds by analyzing the file,
+this means</p>
+
+    <ul>
+      <li>
+        <p>Identifying the file formats (in the first instance only TIFF is used).</p>
+      </li>
+      <li>
+        <p>Checking if extractors and validators are present for that file type.</p>
+      </li>
+      <li>
+        <p>Extracting the embedded metadata for the file format, the metadata will
+be stored in the database of the conformance checker</p>
+      </li>
+      <li>
+        <p>Validating the metadata conforming the standard specification. In this
+step the extracted values are compared against the database of allowed
+values</p>
+      </li>
+      <li>
+        <p>Extracting the format specific elements. The specific elements of the
+file format are stored in the database of the conformance checker.</p>
+      </li>
+      <li>
+        <p>Storing the extracted file information in a database so the information
+can be used by other modules.</p>
+      </li>
+      <li>
+        <p>Validating the file characteristics against the database with allowed
+values (see later), to see if the file conforms to the specification. If
+problems are detected, the system checks the known issue database (see
+later) to see if the value corresponds to a known issue. If the problem
+is not known the error is reported as unknown.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>The system generates a report based on the output of the analysis. The
+report contains per file:</p>
+
+    <ul>
+      <li>
+        <p>errors for issues that do not conform to the standard. The report also
+links to extra explanation about the problem. The explanation with the
+error message in the report also indicates if this is a problem that can
+be fixed by the conformance checker tool (see Fixing the embedded
+metadata (UI) and Fixing an error in the file (UI))</p>
+      </li>
+      <li>
+        <p>warnings for issues that prevent long term preservation. The report
+contains links to extra explanation of the warnings and why they are
+warnings.</p>
+      </li>
+      <li>
+        <p>Valid if no errors were detected</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="fixing-the-embedded-metadata-ui">Fixing the embedded metadata (UI)</h3>
+
+<p>In the error report of the conformance checker, the system reports the metadata
+errors. It also shows which can be automatically fix. An example of embedded
+metadata that can be automatically changed are wrong formatted date and time
+notations.</p>
+
+<ul>
+  <li>
+    <p>If the error is fixable, the user clicks link next to the metadata error. If
+the error is not fixable no link is present and the problem is reported. The
+information on the website explains the error.</p>
+  </li>
+  <li>
+    <p>Before executing the fix, the system checks if there is a backup of the
+file. If the backup file doesn't exist the file is copied and the new
+version is added to the database (see technical design, substorage system
+for the details).</p>
+  </li>
+  <li>
+    <p>The fix is performed on the last file. This means if multiple corrections
+are executed the fixes are executed on the file that has all the previous
+fixes combined. After every fix the file is validated again to see if no new
+problems occur and that the error is fixed. All the fixes preformed and the
+remaining problems are recorded in the database. This will be used to create
+the PREMIS<sup id="fnref:5"><a href="#fn:5" class="footnote">5</a></sup> metadata upon SIP<sup id="fnref:6"><a href="#fn:6" class="footnote">6</a></sup> export.</p>
+
+  </li>
+  <li>
+    <p>If the error didn't get fixed. The system reports the error and reverts to
+the previous situation.</p>
+  </li>
+  <li>
+    <p>The user has also the possibility to fix all the errors. When the user
+clicks on fix all the errors. The system creates a backup file and preforms
+all the fixes. In the end a validation checks if the correction succeeded.
+If it didn't the error is reported to the user and the backup is restored
+for that file. The user can click through every error to look for the
+problem, so they know where the problem lies.</p>
+  </li>
+  <li>
+    <p>The user can also fix all the problems at once. The user clicks on the top
+of the report Fix all problems. The system will create for every file a
+backup and preform all the fixes on the files that can be executed
+automatically.</p>
+  </li>
+</ul>
+
+<h3 id="fixing-an-error-in-the-file-ui">Fixing an error in the file (UI)</h3>
+
+<p>This will allow a user to fix some common errors in a file. For example a TIFF
+file starts with uppercase MM of II, some applications create files with
+lowercase. It is prohibited by the specification and for long time preservation
+it is better to change this to uppercase as it should be (See the TIFF/A
+specification for the details of the problems that can be solved).</p>
+
+<ul>
+  <li>
+    <p>The error report contains information about the error and if it can be
+fixed. By clicking on the link next to the error. The system preforms a fix
+of the error in the file(s) affected.</p>
+  </li>
+  <li>
+    <p>Before executing the fix, the system checks if there is a backup of the
+file. If the backup file doesn't exist the file is copied (see technical
+design, substorage system for the details)</p>
+  </li>
+  <li>
+    <p>The fix is performed on the last file. This means if multiple corrections
+are executed the fixes are executed on the file that has all the previous
+fixes combined. After every fix the file is validated again to see if no new
+problems occur and that the error is fixed.</p>
+  </li>
+  <li>
+    <p>The system writes in the database the preformed actions on the file (audit
+log). Every error that is fixed is a row. The row contains file identifier,
+problem description, error code and description of the solution. The
+description of the solution is a human readable. This will be used to create
+the PREMIS data when exporting to SIP.</p>
+  </li>
+</ul>
+
+<p>There isn't a fix all option, instead the file will be saved as a
+'preservation-safe' TIFF. This means the file will be saved with a subset of the
+TIFF specification as defined in the specification (See TIFF/A specification).
+This makes the file not only TIFF/EP or TIFF/IT-compliant, but also solves
+preservation and data interchange problems.</p>
+
+<ul>
+  <li>
+    <p>When the user clicks on convert at the top of the report and the user
+selects a file format, the system will save all the files to the selected
+file format (the first file format will be selected default)<br />
+(See technical design for more information, but a File Format plugin can
+support more than one file format to convert to. This will be
+preservation-safe TIFF for the TIFF plugin developed during Preforma)</p>
+  </li>
+  <li>
+    <p>The system writes the errors that were fixed by converting to the specified
+file format to the audit log. Every row contains file identifier, problem
+description, error code and description of the solution (here saved to
+'preservation-safe' TIFF)
+ </p>
+  </li>
+</ul>
+
+<h3 id="export-sip-ui">Export SIP (UI)</h3>
+
+<p>When the user is finished with checking the conformance, the user can export the
+results of the conformance checker.</p>
+
+<ul>
+  <li>
+    <p>The user clicks export to SIP</p>
+  </li>
+  <li>
+    <p>The system responds by exporting the files (the original files and the new
+files). If there was a directory structure in the input, the system exports
+the same directory structure. The new files are added inside the original
+folder structure with the original files, but they have a CRC32 checksums of
+the original filename and path added to the filename separated by an
+underscore. If the filename is too long, the filename is shortened to add
+the CRC32 checksum. The top folder also has a METS file with for every file
+the technical metadata in MIX<sup id="fnref:7"><a href="#fn:7" class="footnote">7</a></sup> format for TIFF images and an audit log in
+PREMIS with the actions preformed on the files. The audit log is extracted
+from the database. The technical metadata is read from the file when during
+the creation of the SIP. The labels in the METS file contain the original
+filename. For every file a checksum gets calculated, minimum MD5 and
+SHA-256. This is the minimum information that needs to be present in the
+METS file, more information can be added.</p>
+
+  </li>
+</ul>
+
+<h1 id="administrator-interface">Administrator interface</h1>
+
+<h2 id="diagram-1">Diagram</h2>
+
+<p><img src="images/SystemAdministration.png" alt="" /></p>
+
+<h2 id="use-case">Use case</h2>
+
+<h3 id="import-preservation-policies-from-scape">Import preservation policies from SCAPE</h3>
+
+<ul>
+  <li>
+    <p>The user clicks in update SCAPE preservation policies on update policies</p>
+  </li>
+  <li>
+    <p>If this is the first time, the system executes a git clone of the SCAPE
+policies<sup id="fnref:8"><a href="#fn:8" class="footnote">8</a></sup>. Otherwise the system executes a git pull. If there is no
+new update the answer will be Already up-to-date.</p>
+
+  </li>
+  <li>
+    <p>The system will run the import script to convert the RDF to database.
+The uri is the identifier in the database and is used to update the
+existing data. If an uri isn't present the rule is marked as deleted. If
+a maturity level is associated the user will be notified. The system
+will show a list of rules that will be deleted. The system asks if the
+rule should be deleted as the information will become invisible. If the
+user presses Yes, nothing happens. The system continues. If the user
+presses No the rules are marked as not deleted again.</p>
+  </li>
+  <li>
+    <p>The system will show a message: policies updated. Policies added:
+[number of new policies]; Policies updated: [number of policies
+updated]; Policies deleted: [number of policies deleted]; Total
+policies: [all the available policies, excluded deleted policies]</p>
+  </li>
+</ul>
+
+<h3 id="exporting-the-database-with-known-issues">Exporting the database with known issues</h3>
+
+<ul>
+  <li>
+    <p>When the user selects export database, the system responds by asking for
+the format to export. The possible formats are JSON and HTML.</p>
+  </li>
+  <li>
+    <p>When the user selects the format to export, the system responds by
+showing a dialogue where to save the export.</p>
+  </li>
+  <li>
+    <p>When the user selects a location to export the database to, the system
+responds by exporting the active, deprecated and inactive error codes
+with the example TIFF files in the specified location</p>
+  </li>
+</ul>
+
+<h3 id="user-page">User page</h3>
+
+<p>The user page contains the users settings (for example username and password).
+The user can also see the previous stored reports and files.</p>
+
+<ul>
+  <li>
+    <p>When the user selects Manage user information. The system responds by
+retrieving all the available user information and displaying it on screen.</p>
+
+    <ul>
+      <li>
+        <p>In the screen the user can change the password associated with the
+account and the full name</p>
+      </li>
+      <li>
+        <p>The user can also select the language of the interface. This means that
+the error description and the human readable will be shown in the
+interface language. If the information is not translated, the
+information will be shown in English (the default language)</p>
+      </li>
+      <li>
+        <p>The user can also select generate API key. When the user presses
+Generate API key, the system returns a key with current time in
+microseconds, username and salt value. This will be used by the API.</p>
+      </li>
+      <li>
+        <p>When the user presses Save, the system responds by saving the
+information in the database.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>When the user selects Reports. The system responds by opening all the
+Reports the user has created. Reports are errors reported by validation and
+corrector.</p>
+  </li>
+  <li>
+    <p>When the user selects Files. The system responds by showing different
+package. If the user clicks on one of the sessions, the system responds by
+listing all the original files and if the file has a fixed file, the system
+also shows this file. In this view the user can also see if a file is valid
+and if errors are reported. The user can click through to the reports to see
+the details.</p>
+
+    <ul>
+      <li>When the user clicks next to a file on delete, the system responds by
+deleting the file and all its associated data will be removed. In the
+list of package the user can also delete a package. There is also a
+selection button next to every package and one at the top to selected
+one or more packages to be deleted. If the user presses delete, the
+system will respond by asking if the user wants to delete the selected
+package. If the user presses yes, the system will respond by deleting
+the files and all associated information.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="administrator-page">Administrator page</h3>
+
+<p>The administrator can manage users, see all package, see all files, see all
+reports and make a user administrator. The only difference with another user is
+that the administrator is able to see all the information of all the users and
+can change global settings in the system. The difference between manage packages
+and manage files, is the first option shows the files per package. The other
+option shows files regardless of their package. This is a different view of the
+same information to make management easier.</p>
+
+<ul>
+  <li>
+    <p>When an administrator clicks on manage the system, the system responds by
+opening the administrator interface.</p>
+  </li>
+  <li>
+    <p>When the administrator clicks manage users, manage package, manage files or
+manage reports, the system responds by opening all the users, packages,
+files or reports.</p>
+  </li>
+  <li>
+    <p>When the administrator clicks select all users, packages, files or manage
+reports the administrator can select delete. When the administrator clicks
+the delete the system responds by showing a dialog 'Are you sure you want to
+delete the selected [users, packages, files or reports].</p>
+  </li>
+  <li>
+    <p>When the administrator clicks Yes, the system starts deleting the selected
+users, packages, files or reports and the associated information. If the
+administrator presses No, the system does nothing.</p>
+  </li>
+  <li>
+    <p>When the administrator selects a user from the list in manage users, the
+system responds by opening the information of the user. The administrator
+sees all the information a user would see, but the administrator sees one
+extra option 'administrator'. When the administrator selects this option,
+the system responds by making the user an administrator.</p>
+  </li>
+  <li>
+    <p>When the administrator selects create a user, the system responds by opening
+the screen with user information. When the administrator fills in username
+and password, the information can be saved. The optional parameters are
+administrator and language. There is also a button to generate a password
+for the user instead of choosing a password.</p>
+  </li>
+</ul>
+
+<p>The administrator can also change the settings from the different databases</p>
+
+<ul>
+  <li>
+    <p>When the administrator clicks Change the system settings, the system
+responds by opening the system settings.</p>
+  </li>
+  <li>
+    <p>The user can set some configuration in the application:</p>
+
+    <ul>
+      <li>
+        <p>url for the SPACE preservation repository</p>
+      </li>
+      <li>
+        <p>export directory for the system</p>
+      </li>
+      <li>
+        <p>manage the File Formats plugins</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>When the administrator presses Save, the system responds by adding the
+values to the database</p>
+  </li>
+</ul>
+
+<h3 id="manage-file-format-plugins">Manage File Format plugins</h3>
+
+<p>The administrator can install, update, remove and reload the available plugins.
+The File format plugins will import the known issues and the allowed values in
+the database.</p>
+
+<ul>
+  <li>
+    <p>When the administrator clicks on reload available plugins, the system
+responds by checking the plugin folder if new or updated plugins are
+available.</p>
+  </li>
+  <li>
+    <p>When the administrator clicks on Install plugin, the system responds by
+installing the new plugin (see technical design for details)</p>
+  </li>
+  <li>
+    <p>When the administrator clicks on Update plugin, the system responds by
+updating the information in the system (see technical design for details)</p>
+  </li>
+  <li>
+    <p>When the administrator clicks on Remove plugin, the system responds by
+removing the information from the database. The plugin itself needs to be
+deleted on the server</p>
+  </li>
+</ul>
+
+<h1 id="test-framework">Test framework</h1>
+
+<h2 id="description">Description</h2>
+
+<p>The test framework will be used to test the robustness of the LIBIS/AWare
+conformance checker and will be documentation for the problems identified in the
+file formats (in our case the TIFF file format). Other developers can use this
+framework to test their applications and test if the files created by their
+application don't contain known issues.</p>
+
+<h2 id="diagram-2">Diagram</h2>
+
+<p><img src="images/TestFramework.png" alt="" /></p>
+
+<h2 id="database-with-known-issues">Database with known issues</h2>
+
+<h3 id="description-1">Description</h3>
+
+<p>This database describes the problems identified in a file format. The database
+contains information describing the problem, the solution and an error code (See
+technical design for the details)</p>
+
+<ol>
+  <li>
+    <p>For every file format it defines the errors, warnings and an explanation of
+the error.</p>
+  </li>
+  <li>
+    <p>For every error there is also a file that demonstrates the problem</p>
+  </li>
+  <li>
+    <p>The errors, warnings and explanations can be exported as documentation in
+HTML format and the files exported in a folder.</p>
+  </li>
+  <li>
+    <p>The error codes cannot change. This means if the meaning needs to change,
+new error codes are created and the description contains the reference to
+the old error code. The old error also references the new error codes and a
+description why the change was necessary. The status will be deprecated. If
+a new change occurs and the old error code is the '2nd generation' error
+code, the code will get the status inactive. All other error codes are
+active.</p>
+  </li>
+  <li>
+    <p>It isn't possible to add, update or delete information in the database, this
+is should only happen through the update of the File Format plugin.</p>
+  </li>
+</ol>
+
+<h3 id="use-cases-1">Use cases</h3>
+
+<h4 id="searching-for-information">Searching for information</h4>
+
+<ul>
+  <li>
+    <p>If the user selects search, the system responds by opening the basic
+search screen. This is an input field with a search button.</p>
+  </li>
+  <li>
+    <p>When the user enters a search term and the presses search the system
+responds by searching all the available metadata fields. The user can
+sort on fields error code, filename, error type, file format, relevance
+and includes a file or not.</p>
+  </li>
+  <li>
+    <p>If the user selects a result, the system responds by opening the detail
+screen and showing all the information available</p>
+  </li>
+</ul>
+
+<h4 id="detail-information-screen">Detail information screen</h4>
+
+<ul>
+  <li>
+    <p>If the user opens the detail screen. The system responds by showing all
+available metadata of the issue.</p>
+  </li>
+  <li>
+    <p>If the user presses print, the system responds by creating a print
+friendly version of the page and opens the dialog window to print the
+page.</p>
+  </li>
+  <li>
+    <p>If the user selects Export the metadata, the system responds by showing
+the options to export as CSV or HTML. If the users selects CSV, the data
+is prepared and exported as CSV. If the user select HTML, the system
+prepares a HTML view and sends the HTML to the user.</p>
+  </li>
+  <li>
+    <p>If the user selects export files. The system responds by opening a
+dialog box for a location to put the files. If the users selects a
+folder and presses export, the system downloads the TIFF files to the
+folder.</p>
+  </li>
+</ul>
+
+<h4 id="advanced-search-on-information">Advanced search on information</h4>
+
+<ul>
+  <li>
+    <p>When the user selects advanced search, the system responds by opening
+the advanced search screen.</p>
+  </li>
+  <li>
+    <p>This screen is a query builder where the user can select a field, select
+an operation and add a value. The operation can be contains, starts
+with, ends with, is empty, is not empty. The user can also add the
+Boolean operators (AND, OR and NOT) to combine different metadata
+elements. An extra metadata element is opened pressing on the plus sign
+next to the Boolean operator field. If a new metadata element is added,
+next to the plus sign to add a new field a minus sign appears to remove
+the newly created field.</p>
+  </li>
+  <li>
+    <p>If the users configures the search query and presses search the system
+responds by translating the query to an appropriate query for the
+system.</p>
+  </li>
+</ul>
+
+<h4 id="browsing-error-codes">Browsing error codes</h4>
+
+<ul>
+  <li>
+    <p>When the user selects Browse error codes, the system responds by opening
+the browse screen of error codes.</p>
+  </li>
+  <li>
+    <p>This screen shows all available error codes. The screen is grouped by
+active, deprecated and inactive error codes.</p>
+  </li>
+  <li>
+    <p>When the user clicks an error code, the system responds by showing the
+detailed information of an error code</p>
+  </li>
+</ul>
+
+<h2 id="database-of-allowed-values">Database of allowed values</h2>
+
+<h3 id="description-2">Description</h3>
+
+<p>This database contains the description of a file format and the allowed values
+in the metadata and files. The properties can have one of more allowed values,
+if a match of a value isn't enough a reference to the function name in a plugin
+will be used as value of the property. The application will call the function in
+this plugin.</p>
+
+<p>The information from the allowed values will be supplied by the File Format
+plugin.</p>
+
+<h2 id="ground-truth-database">Ground truth database</h2>
+
+<h3 id="description-3">Description</h3>
+
+<ul>
+  <li>
+    <p>For every TIFF file it contains a Json file with description of the key
+features of the TIFF file. This is the main difference with the known issues
+database. The Ground truth database has a detailed description of a TIFF
+file that can be checked against the same file created by for example
+another application. This way a developer or a user can test if the new file
+is the same technically and doesn't introduce new problems. For the Preforma
+project this is important to test the continued development of the software.
+If bugs are introduced that effect the validation of TIFF. This can spotted
+easily with this ground truth database.</p>
+  </li>
+  <li>
+    <p>It has the possibility to export the information to the database with known
+issues. Only the known issues are exported. The files with no issues stay in
+the ground truth database but are not exported to keep the information
+relevant. The export functionality is used to create documentation about
+known issues</p>
+  </li>
+</ul>
+
+<h2 id="json-grounth-truth-specification">Json grounth truth specification:</h2>
+
+<p>The ground truth file describes the technical properties of the file and the
+errors that will be identified when the files are validated. The files in the
+Ground truth database don't need to be valid files, but they need to be
+described so that software can check if all the information is retrieved and if
+the retrieved information is correct. It is important to have a Ground truth
+specification document, that can be checked, audited and shared with others.</p>
+
+<ul>
+  <li>
+    <p>The filename is [filename of the tiff file, including extension]_groundtruth.json. This is not	mandatory, the link between the filename and the TIFF file is also in the specification. This 	link is mandatory</p>
+  </li>
+  <li>
+    <p>The contents of the specification file:</p>
+
+    <ul>
+      <li>
+        <p>File format needs to be minimum an identifier of pronom id or mimetype</p>
+      </li>
+      <li>
+        <p>The file format registry used is also noted in a type element (current
+values: pronom, mimetype). This can be extended later on.</p>
+      </li>
+      <li>
+        <p>MD5 checksum</p>
+      </li>
+      <li>
+        <p>Error codes:</p>
+
+        <ul>
+          <li>
+            <p>Contains a list of error codes. The explanation of the error is not
+stored in the file, but is stored on a separate website. The name of
+the error code will be: error_[number].</p>
+          </li>
+          <li>
+            <p>If no errors exist, the list of error codes is empty.</p>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <p>Properties of the file</p>
+
+        <ul>
+          <li>The extracted attributes of, in this case, the TIFF file. These are
+not only metadata, but also technical properties of the TIFF file</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>All elements are mandatory in the specification.</p>
+  </li>
+  <li>
+    <p>A valid ground truth item must have a valid specification file and an
+associated (TIFF) file. The TIFF file is also in the Ground truth file name and is the mandatory link between TIFF file and Ground truth.</p>
+  </li>
+</ul>
+
+<h2 id="use-cases-2">Use cases</h2>
+
+<h3 id="upload-ground-truth-file">Upload ground truth file</h3>
+
+<ul>
+  <li>
+    <p>When the user clicks on Upload ground truth file, the system responds by
+opening the screen to upload the Ground truth files</p>
+  </li>
+  <li>
+    <p>The user selects one or more Tiff files to upload. The system responds by
+uploading the files as is described in the Upload Files use case.</p>
+  </li>
+  <li>
+    <p>If Ground truth files are available the user can select to upload Ground
+truth files. The system responds by uploading the Ground truth files the
+same way as described in the Upload Files use case. The system will also
+validate the specification file. If an error is detected the system shows
+which file has the error and what the error is. The ground truth files will
+be linked to the TIFF files by naming conventions. The ground truth files will be linked to the TIFF files by the link mentioned in the specification file (see Ground truth specification).</p>
+  </li>
+</ul>
+
+<h3 id="creating-ground-truth-files">Creating Ground truth files</h3>
+
+<p>If the upload didn't have or the user want to recreate the Ground truth file,
+the user can create a ground truth. The LIBIS/AWare conformance checker can
+extract the key features of a file that make up the ground truth file. The user
+can also edit the extracted values. This is an important feature, because if
+there are bug is the creation tool, the user needs to be able to correct these
+mistakes. By allowing the ground truth files to be made semi-automatically it
+will be easier and quicker to create the ground truth files.</p>
+
+<ul>
+  <li>When the user clicks on create Ground truth file, the system responds by
+analysing all the TIFF files in a package and extracting all the key
+features. The system stores the key features for every file in the database.
+The system returns to the file manager. This is a process that doesn't block
+the UI.</li>
+</ul>
+
+<h3 id="editing-ground-truth-files">Editing Ground truth files</h3>
+
+<ul>
+  <li>
+    <p>When the user clicks on the edit button next to a Ground truth file, the
+system responds by opening the ground truth editor</p>
+  </li>
+  <li>
+    <p>The user can edit a file characteristic or can add or remove a file
+characteristic. This means changing the key or the value of a file
+characteristic.</p>
+  </li>
+  <li>
+    <p>When the user is finished, the user presses save and the system responds
+by updating the information in the record and updating the audit log.</p>
+  </li>
+</ul>
+
+<h3 id="checking-tiff-files-against-the-ground-truth">Checking (TIFF) files against the ground truth</h3>
+
+<ul>
+  <li>
+    <p>The user clicks on Test file against ground truth, the system responds by
+opening the File manager.</p>
+  </li>
+  <li>
+    <p>The user selects one or more files against the ground truth. The system
+responds by checking the file against its ground truth. If no ground truth
+file is found, the system creates the ground truth specification and checks
+the ground truth.</p>
+  </li>
+  <li>
+    <p>The system returns a report at the end of the checking that shows which
+files were valid according to the ground truth specification and which were
+invalid. If the result was invalid extra information about the problem is
+shown (for example which information is missing). The information is also
+stored in the audit log.</p>
+  </li>
+</ul>
+
+<h3 id="exporting-data-from-the-ground-truth-database">Exporting data from the ground truth database</h3>
+
+<p>The exported files need to support the naming conventions as defined in the Json
+specifications. The TIFF file and the ground truth files have the same name
+(excluding the extension). The groundtruth files have _groundtruth.json at the
+end.</p>
+
+<ul>
+  <li>
+    <p>When the users clicks export ground truth data, the system responds by
+opening the File manager.</p>
+  </li>
+  <li>
+    <p>When the user selects a package and clicks export ground truth or the when
+the users opens a package and selects one or more files to export . The
+system responds by asking a location to export</p>
+
+    <ul>
+      <li>
+        <p>The user can export it to a local folder, the system opens a window to
+select a location on the local file system of the user</p>
+      </li>
+      <li>
+        <p>The user can select the option to export the files to a location on the
+system. The location is specified in the configuration of the system.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>When the user selected a location to export, the user presses export and the
+system first checks if it is running locally or if the data is exported to a
+location on the system. The export function will copy the ground truth data
+and corresponding files to the specified location. If the data needs to be
+send to the user, the data is copied to the export location and the user
+gets a link to download the ground truth. The files are zipped. If the zip
+file exceeds 2GB, multipart zip are created and made available for download.<br />
+Exporting means generating the ground truth information in a ground truth
+json specification file with the file it describes. The filename of the
+specification file is the same as the file it describes, but with
+_groundtruth.json appended.</p>
+  </li>
+</ul>
+
+<h1 id="policy-checker">Policy checker</h1>
+
+<h2 id="define-a-preservation-policy-for-an-institution">Define a preservation policy for an institution</h2>
+
+<p>The preservation policy will follow the SCAPE preservation policy framework. In
+this framework a preservation policy consists of Guidance policy, Preservation
+procedure and Control policy. The Guidance policy are the high level goals of an
+organisation. The Preservation procedure are the actions to be taken to reach
+the high level goals. The Control policy are machine readable implementation of
+the actions defined in the Preservation Procedure. A control policy consist of
+content Set, which are the files to be tested with the policy checker and
+Objectives. The objectives contain the properties that need to be tested in the
+Policy checker.</p>
+
+<p><img src="images/preservationPolicyFramework.png" alt="Figure 1: SCAPE Policy Framework" /></p>
+
+<h2 id="implementation-of-preservation-policies">Implementation of preservation policies</h2>
+
+<p>A user needs to be able to configure the different levels of a policy and they
+should be able to start from any level. They can for example start with the
+definition of Guidance Policies or Preservation Procedures or Control Policies.
+To help the users to define a policy the policies from SCAPE must be imported
+(see Administration use case).</p>
+
+<ul>
+  <li>
+    <p>To be able to test the preservation policy at least the control policies
+need to be created:</p>
+
+    <ul>
+      <li>
+        <p>The default setup has the policies from SCAPE<sup id="fnref:8:1"><a href="#fn:8" class="footnote">8</a></sup> imported in the tool.
+The source metadata field from policy rule should be SCAPE</p>
+
+      </li>
+      <li>
+        <p>The user can define their own policies based on the file characteristics
+of the specified file format</p>
+      </li>
+      <li>
+        <p>Creating a preservation policy is a growth process. The software should
+support this process by easily create a control policy, reorder the
+policies, create a preservation procedure and move a control policy as a
+child of a preservation procedure,…</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>The control policies can be grouped in a procedure policy. The procedure
+policy is human readable text with the following fields:</p>
+
+    <ul>
+      <li>
+        <p>Title of the preservation policy (mandatory)</p>
+      </li>
+      <li>
+        <p>Description of the preservation policy</p>
+      </li>
+      <li>
+        <p>The reason why the policy is important for the organization</p>
+      </li>
+      <li>
+        <p>Risks associated with not having the procedure policy</p>
+      </li>
+      <li>
+        <p>Life cycle stage the policy will be relevant (will be an selection<sup id="fnref:9"><a href="#fn:9" class="footnote">9</a></sup>
+menu)</p>
+
+      </li>
+      <li>
+        <p>Relationship with other preservation procedure policy</p>
+      </li>
+      <li>
+        <p>Stakeholders: a list with the type of stakeholders and a text field to
+further specify role of the stakeholder<sup id="fnref:10"><a href="#fn:10" class="footnote">10</a></sup>.</p>
+
+      </li>
+      <li>
+        <p>Maturity level</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>The procedure policies can be grouped in guidance policies. The guidance
+policies are human readable with the following fields:</p>
+
+    <ul>
+      <li>
+        <p>Title (mandatory)</p>
+      </li>
+      <li>
+        <p>Description</p>
+      </li>
+      <li>
+        <p>Maturity level</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="diagram-3">Diagram</h2>
+
+<p><img src="images/PolicyChecker.png" alt="" /></p>
+
+<h2 id="use-cases-3">Use cases</h2>
+
+<h3 id="create-a-preservation-policy">Create a preservation policy</h3>
+
+<ul>
+  <li>
+    <p>When the user clicks on Create a preservation policy. The system
+responds by opening the screen for preservation policies</p>
+
+    <ol>
+      <li>
+        <p>If the user selects to create a control policy, the system responds
+by opening the screen for adding a control policy</p>
+
+        <ol>
+          <li>
+            <p>The system asks the user if he wants to select files to process
+during the policy creation.</p>
+
+            <p>NaN. If the user selects 'Yes', the system will respond by
+opening the file selector menu. If the files are already present
+the user can select the existing files.</p>
+
+            <p>NaN. If the user selected the existing files, the system
+responds by processing the files and will extract the technical
+properties available in the files and make them usable in the
+system.</p>
+
+            <p>NaN. If the users can't select files, the system goes to the
+next step</p>
+          </li>
+          <li>
+            <p>The user can select an existing Objective or a new Objective.</p>
+
+            <p>NaN. If the user selects an Objective from the default properties
+from the SCAPE project or the technical properties from the
+files. The user fills in the value for the Objective to be
+checked.</p>
+
+            <p>NaN. If the user selects 'Add new Objective', the system
+responds by opening the screen to input metadata from Objective.</p>
+          </li>
+        </ol>
+      </li>
+      <li>
+        <p>If the user selects to create a procedure policy, the system
+responds by opening the screen for adding a procedure policy</p>
+
+        <ol>
+          <li>
+            <p>The user fills in metadata<sup id="fnref:12"><a href="#fn:12" class="footnote">11</a></sup> for the procedure policy and can
+select one or more control policies</p>
+
+          </li>
+          <li>
+            <p>When the user clicks on save, the system responds by storing the
+information</p>
+          </li>
+        </ol>
+      </li>
+      <li>
+        <p>If the user selects to create a guidance policy, the system responds
+by opening the screen for adding a guidance policy</p>
+
+        <ol>
+          <li>
+            <p>The user fills in metadata<sup id="fnref:12:1"><a href="#fn:12" class="footnote">11</a></sup> for the guidance policy and
+selects one or more procedure policies</p>
+          </li>
+          <li>
+            <p>When the user clicks on save, the system responds by storing the
+information</p>
+          </li>
+        </ol>
+      </li>
+    </ol>
+  </li>
+</ul>
+
+<h3 id="open-existing-policy">Open existing policy</h3>
+
+<ul>
+  <li>
+    <p>When the user clicks on Open an existing preservation policy</p>
+  </li>
+  <li>
+    <p>The system responds by opening the screen for selecting a preservation
+policy</p>
+  </li>
+  <li>
+    <p>When the user selects a preservation policy, the system responds by
+opening the preservation policy and shows the list of Guidance policy,
+procedure policies and control policies. For every related element, the
+system shows in the tree structure the sub-elements. For example if the
+Guidance policy has related procedure policies the system groups the
+procedure polices under the related Guidance policy. If a sub-element
+exists under different elements, the sub-element is repeated. For
+example a procedure policy exists under different Guidance policies the
+Procedure policy is repeated.</p>
+  </li>
+  <li>
+    <p>When the user selects an element in the tree, the system responds by
+opening the element in edit mode. The user can edit and save it. To
+change the values of the elements.</p>
+  </li>
+</ul>
+
+<h3 id="check-preservation-policy">Check preservation policy</h3>
+
+<ul>
+  <li>
+    <p>When the user clicks on Check preservation policy. The system responds
+by opening the list of available preservation policies.</p>
+  </li>
+  <li>
+    <p>If the user selects a preservation policy, the system responds by
+opening the File Manager. The user can select one or all the files in a
+"package".</p>
+  </li>
+  <li>
+    <p>If the user selects one or all the files, the system responds by testing
+the Control Policies of the files. The system will only test the Control
+Policies that use the file characteristics.</p>
+  </li>
+  <li>
+    <p>The system generates a report with all the issues. If the user selects
+details, the system shows the complete log.</p>
+  </li>
+</ul>
+
+<h3 id="export-preservation-policy">Export preservation policy</h3>
+
+<ul>
+  <li>
+    <p>When a user clicks on Export preservation policies. The system responds
+by opening the list of available preservation policies.</p>
+  </li>
+  <li>
+    <p>When the user selects a preservation policy, the system responds by
+opening the window to select an export location.</p>
+  </li>
+  <li>
+    <p>When the user selects an export location and select export. The system
+responds by exporting the complete preservation policy to HTML and
+saving the file in the selected location</p>
+  </li>
+</ul>
+
+<h3 id="evaluate-maturity-level">Evaluate Maturity level</h3>
+
+<ul>
+  <li>
+    <p>When the user clicks Evaluate Maturity level<sup id="fnref:14"><a href="#fn:14" class="footnote">12</a></sup>. The system responds
+by opening the list of available preservation policies.</p>
+
+  </li>
+  <li>
+    <p>When the user selects a preservation policy, the system responds by
+checking if all policy levels have maturity levels.</p>
+
+    <ol>
+      <li>
+        <p>If a level doesn't have a maturity level, the system responds by
+giving a list that needs to be updated with maturity levels. The
+user can click each item on the list to update the maturity levels.</p>
+      </li>
+      <li>
+        <p>If the user presses continue, the system will calculate maturity
+levels for all the elements with a maturity level, the system
+responds by calculating the maturity level per Preservation Policy
+Type and taking the average. At the end all the different
+Preservation Policy Types are added and the average is taken.</p>
+      </li>
+      <li>
+        <p>The system also checks if an Aimed Maturity Level is provided. If no
+level is provided, the system asks for the Aimed Maturity level. If
+the user selects a maturity level, the system proceeds and shows the
+calculated maturity and the Aimed Maturity Level</p>
+      </li>
+    </ol>
+  </li>
+  <li>
+    <p>When the user clicks the details button, all the maturity levels of
+every policy element are shown. The system shows if a user is on or off
+target by indicating the maturity level of every policy rule. The
+difference between the calculated Maturity level and the aimed Maturity
+Level is the Maturity Gap.</p>
+  </li>
+</ul>
+
+<h1 id="api-support">API support</h1>
+
+<h2 id="login-1">Login</h2>
+
+<ul>
+  <li>When the API user sends a login request with API key, the system checks the
+API key and sends back 200 OK (see details in technical design).</li>
+</ul>
+
+<h2 id="upload-files-1">Upload files</h2>
+
+<p>There are 2 ways to upload files with the API. Upload files through the user
+interface to upload files and use the package id to identify the upload or
+configuration of the path on the system to access the files.</p>
+
+<h3 id="upload-by-upload-path">Upload by upload path:</h3>
+
+<p>The user can upload the file in their preferred way. In the local scenario the
+user can copy the files in the correct folder.</p>
+
+<ul>
+  <li>When the API user sends a request with package id, the system responds by
+checking if the package is available on the server. If the package is not
+accessible, the system sends back an error 'package doesn't exist on the
+system'. If the package is accessible, the system responds by moving the
+files in the correct structure.</li>
+</ul>
+
+<h3 id="upload-through-ui">Upload through UI:</h3>
+
+<ul>
+  <li>When the user uploaded the file through the UI, the API user can send the
+package id to the system. The system responds by checking the package id and
+if the API key corresponds to the package id of the user. If the checking
+was successful, the system responds by sending 200 OK, if there was an error
+the system returns 'there was a problem selecting the package'.</li>
+</ul>
+
+<h2 id="conformance-checker-1">Conformance checker</h2>
+
+<ul>
+  <li>
+    <p>When the API user sends a conformance check request, the request includes
+package id. The system responds by checking if the status from the package
+is uploaded and executes the validation (see the UI use case for the
+details). The system sends back 200 OK with a status processing, when there
+is an error the system sends back the error 'package is not uploaded yet'.</p>
+  </li>
+  <li>
+    <p>When the API user wants to know the status, the API user requests a status
+update. The API user sends package id with the status request. The system
+responds by checking if the status of the package is processed. The files
+are processed if all the files in the package have status valid or invalid.
+The system responds with 200 OK and status processed or status processing.</p>
+  </li>
+  <li>
+    <p>When the API user want to download the validation report, the API user
+requests a validation report. The API user sends package id with the
+validation report request. The system responds by checking if the status of
+the package is processed. The system returns the report in json format. If
+the status is not processed. The system returns the error 'status is not
+processed'.</p>
+  </li>
+</ul>
+
+<h2 id="fix-files-file-and-metadata">Fix files (file and metadata)</h2>
+
+<ul>
+  <li>
+    <p>When the API user sends a fix file request, this request includes package
+id. If no file has the status invalid, the system returns the status 'all
+files are valid, nothing to be fixed'. If the status of one of more files is
+invalid, the system will respond to the user with 200 OK. The system will
+continue by saving the invalid files to a preservation-safe TIFF. The files
+will be saved in the current package. If all the files are saved, the status
+is finished otherwise the status is processing.</p>
+  </li>
+  <li>
+    <p>When the API user wants to know the status, the API user requests a status
+update. The API user sends package id with the status request. The system
+responds by checking if the status of the status file is finish. The system
+responds with 200 OK and status finished or status processing if the status
+of the file is processing.</p>
+  </li>
+  <li>
+    <p>When the API user wants to download the processed files, the API user
+requests get fixed files. The API user sends package id with the get fixed
+file request. The system responds by checking if the status is finished. The
+system responds with 200 OK and list of links to download the files. The
+files are zipped in files smaller than 2GB. If files are too big (larger
+than 2GB) to send, the system responds by creating multipart zip files. If
+the system runs locally, the path to the files is send back. The files
+aren't zipped.</p>
+  </li>
+</ul>
+
+<h2 id="export-to-sip6">Export to SIP<sup id="fnref:6:1"><a href="#fn:6" class="footnote">6</a></sup></h2>
+
+<ul>
+  <li>
+    <p>When the API user sends an export request, the API user sends an export SIP
+request. The API user sends the package id. The system sends a status 200 OK
+back. The system continues by exporting the SIP ( see the export SIP UI use
+case for the details). The system stores the files in the export directory.
+While exporting the status is 'exporting' if the export is in progress or
+'finished' when the export is finished.</p>
+  </li>
+  <li>
+    <p>When the API user wants to know the status, the API user requests a status
+update. The API user sends package id with the status request. The system
+responds by checking if the status is finished. The system responds with 200
+OK and status finished or status processing if the status of the file is
+processing.</p>
+  </li>
+  <li>
+    <p>When the API user wants to download the exported SIP, the API user requests
+get SIP. The API user sends package id with the get SIP request. The system
+responds by checking if the status is finished. The system responds with 200
+OK and list of links to download the SIP. The list also contains the MD5
+checksum of the SIP. The files are zipped in files smaller than 2GB. If
+files are too big (larger than 2GB) to send, the system responds by creating
+multipart zip files and send the list of files. If the system runs locally,
+the path to the files is send back. The files aren't zipped.</p>
+  </li>
+</ul>
+
+<h2 id="policy-checker-1">Policy checker</h2>
+
+<p>For this feature to work a preservation policy needs to be defined. This doesn't
+need to be a complete preservation policy only the level of control policy needs
+to be defined with file characteristics.</p>
+
+<ul>
+  <li>
+    <p>When the API user sends a policy check request, the request includes package
+id and id of the policy. The system continues with executing the policy
+check (for details on the policy check see the UI use case):</p>
+
+    <ul>
+      <li>
+        <p>The system checks if the id of the policy exists. If the id doesn't
+exist, the system returns an error 'Policy doesn't exist'.<br />
+The user can create a preservation policy through the UI.</p>
+      </li>
+      <li>
+        <p>The system execute the control policies against the files of the
+package. The status becomes 'checking policy'. If the processing is
+finished, the status of the package becomes 'policy check finished'.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>When the API user sends a status request. The request includes package id
+and id of the policy, the system responds with the current status.</p>
+  </li>
+  <li>
+    <p>When the API user requests a policy report. The request includes package id
+and id of the policy. If the current status is 'policy check finished', the
+system sends the report in json format of the policy check.</p>
+  </li>
+</ul>
+
+<h2 id="export-policy">Export policy</h2>
+
+<ul>
+  <li>When the API user requests a full preservation policy report. The request
+includes package id and id of the policy. The system responds with a report
+of all the preservation levels in json format as they are defined in the
+preservation policy.</li>
+</ul>
+
+<h2 id="export-database-of-known-issues">Export database of known issues</h2>
+
+<ul>
+  <li>
+    <p>When the API user sends an export database of known issues request. The
+system responds by exporting the database of known issues in HTML format and
+returning 200 OK. The files are zipped and saved in the export folder as
+defined in the system.</p>
+  </li>
+  <li>
+    <p>When the API user sends a status request, the system responds with the
+current status. If the export is still executing, the system responds by a
+message 'exporting'. If the export is finished, the system responds by a
+message 'export complete'.</p>
+  </li>
+  <li>
+    <p>When the API users sends a download request. If the status is export
+complete, the system will respond by a list of links of the files to
+download. If files are too big (larger than 2GB) to send, the system
+responds by creating multipart zip files and send the list of files. If the
+system runs locally, the path to the files is send back. The files aren't
+zipped.</p>
+  </li>
+</ul>
+
+<h2 id="check-against-ground-truth">Check against ground truth</h2>
+
+<p>This is to check a ground truth specification file or (TIFF) file against the
+ground truth database. This can be useful for developers wanting to test for
+example a new version of their application. They want to see if the new version
+doesn't create new problems when creating a TIFF file.</p>
+
+<ul>
+  <li>
+    <p>When the API user sends a check ground truth request. The request includes a
+package id. The system will check if the package contains ground truth
+files. If no ground truth exists, the system returns an error 'Groundtruth
+files are missing'.</p>
+
+    <ul>
+      <li>
+        <p>If a ground truth specification file is provided, the file is checked
+against the ground truth file in the specified package. Differences are
+the errors in the report</p>
+      </li>
+      <li>
+        <p>If a ground truth specification file and a (TIFF) file are provided, the
+system will analyze the TIFF file (see 3. Checking the file conformance
+(UI)) and compare the output against the files in package id. The report
+will contain error comparing the (TIFF) file against the database and
+differences between the ground truth specification and package. The file
+that wasn't found in package are reported as not found.</p>
+      </li>
+      <li>
+        <p>If the request contains 2 package ids, both packages are compared. The
+files are matched from the first package to the other. If there are
+missing ground truth they well be created. If there are no matching
+files between the two packages this is reported as a Not Found error.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>When the API user sends a status request, the system responds with the
+current status. If the ground truth checking is still executing, the system
+responds by a message 'checking ground truth'. If the ground truth checking
+is finished, the system responds by a message 'ground truth checking
+complete'.</p>
+  </li>
+  <li>
+    <p>When the API user requests a ground truth checking report. If the current
+status is 'ground truth checking complete', the system sends the report in
+json format of the ground truth check.</p>
+  </li>
+</ul>
+
+<h2 id="upload-ground-truth">Upload ground truth</h2>
+
+<p>If the ground truth doesn't exist in the system, the ground truth can be added
+manually or through the API. This use case is similar as the Upload Files use
+case for the API (see above). There is one extra step of validation of ground
+truth (see the UI use cases)</p>
+
+<h1 id="library-support">Library support</h1>
+
+<p>The library option will make it possible to integrate the conformance checker
+with other applications. It is feature used by developers. A developer can use
+this to integrate the LIBIS/AWare conformance checker with their solution. The
+library will support the most important functions (see the Core in the technical
+design for details).</p>
+
+<h2 id="conformance-checker-2">Conformance checker</h2>
+
+<p>The developer can use the library to validate the input files.</p>
+
+<ul>
+  <li>
+    <p>When the user adds the library to an application the different methods of
+the library will become available. One of the methods is Validate.</p>
+  </li>
+  <li>
+    <p>When the user passes a file to this method, the system will validate the
+file (see analyzing file in 3. Checking the file conformance (UI)) . The
+system returns true for a valid file or false for an invalid file.</p>
+  </li>
+  <li>
+    <p>When the user uses the method Report, the system generates a report as
+descripted in Checking the file conformance (UI).</p>
+  </li>
+</ul>
+
+<h2 id="fix-files-file-and-metadata-1">Fix files (file and metadata)</h2>
+
+<ul>
+  <li>
+    <p>When the user adds the library to an application the different methods of
+the library will become available. One of the methods is Fix.</p>
+  </li>
+  <li>
+    <p>When the user passes a file to this method, the system will save the file as
+a preservation-safe TIFF.</p>
+  </li>
+</ul>
+
+<h2 id="policy-checker-2">Policy checker</h2>
+
+<ul>
+  <li>
+    <p>When the user adds the library to an application the different methods of
+the library will become available. One of the methods is CheckPolicy.</p>
+  </li>
+  <li>
+    <p>When the user passes a list of files and a preservation policy id, the
+system will respond by extracting the control policies from the preservation
+policy and checking the defined technical properties against the file.</p>
+  </li>
+  <li>
+    <p>The system returns a report with the files that comply to the policy and
+which don't. The report also contains a list of all issues for every file.</p>
+  </li>
+</ul>
+
+<h2 id="export-policy-1">Export policy</h2>
+
+<ul>
+  <li>
+    <p>When the user adds the library to an application the different methods of
+the library will become available. One of the methods is ExportPolicy</p>
+  </li>
+  <li>
+    <p>When the user passes a preservation policy id, the system responds by
+returning Json export of the preservation policy.</p>
+  </li>
+</ul>
+
+<h2 id="check-against-ground-truth-1">Check against ground truth</h2>
+
+<ul>
+  <li>
+    <p>When the user adds the library to an application the different methods of
+the library will become available. One of the methods is CheckGroundTruth.</p>
+  </li>
+  <li>
+    <p>When the user passes a file and ground truth file, the system will respond
+by analyzing the file and comparing the file to the ground truth file.</p>
+  </li>
+  <li>
+    <p>When the user passes two ground truth file, the system will respond by
+comparing the ground truth files.</p>
+  </li>
+  <li>
+    <p>When the user passes two files, the system will respond by extracting the
+ground truth from both files and comparing the ground truth files.</p>
+  </li>
+  <li>
+    <p>The system returns a report with the differences between the ground truth
+files. The differences are the errors. If a file was provided, the report
+contains the differences between the file and the ground truth file and
+between the files.</p>
+  </li>
+</ul>
+
+<h1 id="appendix-1-claims-checked">Appendix 1: Claims checked</h1>
+
+<p>During the project we monitor if there are patent claims that could hinder the
+implementation of our tool. Until now we didn't find a claim that is a problem
+for our application. Below are the claims investigated until now.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Claim number</th>
+      <th>Title</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>US 2014/0330717 A1</td>
+      <td>PAPER PAYMENT RECEIPT, PROCESSING AND FAILURE REMEDIATION</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,103,709 B1</td>
+      <td>COMPUTER-IMPLEMENTED METHOD AND SYSTEM FOR MANAGING ATTRIBUTES INTELLECTUAL PROPERTY DOCUMENTS, OPTIONALLY INCLUDING ORGANIZATION THEREOF</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2014/0122491 A1</td>
+      <td>SYSTEMS AND METHODS FOR AUTHENTICATING AND AIDING IN INDEXING OF AND SEARCHING FOR ELECTRONIC FILES</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2002/0138297 A1</td>
+      <td>APPARATUS FOR AND METHOD OF ANALYZING INTELLECTUAL PROPERTY INFORMATION</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,103,710 B1</td>
+      <td>COMPUTER-IMPLEMENTED METHOD AND SYSTEM FOR MANAGING ATTRIBUTES OF INTELLECTUAL PROPERTY DOCUMENTS, OPTIONALLY INCLUDING ORGANIZATION THEREOF</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,706,810 B2</td>
+      <td>REAL-TIME COLLABORATIVE DOCUMENT REVIEW AND TRANSFER METHOD AND SYSTEM</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,271,563 B1</td>
+      <td>COMPUTER-IMPLEMENTED METHOD AND SYSTEM FOR MANAGING ATTRIBUTES OF INTELLECTUAL PROPERTY DOCUMENTS, OPTIONALLY INCLUDING ORGANIZATION THEREOF</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2013/0013295 A1</td>
+      <td>METHOD AND SYSTEM FOR PROVIDING INITIAL PATENT CLAIM ANALYSIS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2013/0018805 A1</td>
+      <td>METHOD AND SYSTEM FOR LINKING INFORMATION REGARDING INTELLECTUAL PROPERTY, ITEMS OF TRADE, AND TECHNICAL, LEGAL OR INTERPRETIVE ANALYSIS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2013/0013520 A1</td>
+      <td>ELECTRONIC LICENSING SYSTEM AND METHOD</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2014/0279393 A1</td>
+      <td>ELECTRONIC LOAN PROCESSING, MANAGEMENT AND QUALITY ASSESSMENT</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2013/0083362 A1</td>
+      <td>INFORMATION PROCESSING APPARATUS,STORAGE MEDIUM STORED WITH INFORMATION PROCESSING PROGRAM,AND INFORMATION PROCESSING METHOD</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,862,646 B1</td>
+      <td>DATA FILE DISCOVERY, VISUALIZATION, AND IMPORTING</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,885,987 B1</td>
+      <td>COMPUTER-IMPLEMENTED METHOD AND SYSTEM FOR MANAGING ATTRIBUTES INTELLECTUAL PROPERTY DOCUMENTS, OPTIONALLY INCLUDING ORGANIZATION THEREOF</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2014/0250361 Al</td>
+      <td>PRESERVING DOCUMENT CONSTRUCT FIDELITY IN CONVERTING GRAPHIC-REPRESENTED DOCUMENTS INTO TEXT-READABLE DOCUMENTS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 5,528,293</td>
+      <td>DIGITAL ELECTRONIC STILL CAMERA AND METHOD OF RECORDING IMAGE DATA IN MEMORY CARD</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 6,993,196 B2</td>
+      <td>Digital image storage method</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,782,372 B2</td>
+      <td>IMAGE FILE FOR STORING DIGITAL IMAGES AND ANCILLARY DATA VALUES USING MULTIPLE ENCODING METHODS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,508,623 B2</td>
+      <td>IMAGE FILE FOR STORING DIGITAL IMAGES AND ANCILLARY DATA VALUES USING MULTIPLE ENCODING METHODS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,453,498 B2</td>
+      <td>ELECTRONIC IMAGE CAPTURE DEVICE AND IMAGE FILE FORMAT PROVIDING RAW AND PROCESSED IMAGE DATA</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 2013/0194588 Al</td>
+      <td>IMAGE PROCESSING ADAPTER AND METHOD</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,306,368 B2</td>
+      <td>STORING AND PRESENTING ANCILLARY INFORMATION OBTAINED FROM SCANNED PRINTS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,307,636 B2</td>
+      <td>image format including affective information</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,416,454 B2</td>
+      <td>METHOD FOR GENERATING PERSONALIZED DOCUMENTS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 8,749,800 B2</td>
+      <td>SYSTEM FOR GENERATING PERSONALIZED DOCUMENTS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 6,310,647 B1</td>
+      <td>IMAGE FORMAT FOR STORING DIGITAL IMAGES AND INCLUDING MULTIPLE APPLICATION SEGMENTS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,999,860 B2</td>
+      <td>IMAGE FILE FOR STORING DIGITAL IMAGES AND ANCILLARY DATA VALUES USING MULTIPLE ENCODING METHODS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,271,832 B1</td>
+      <td>JPEG COMPATIBLE IMAGE FILE FORMAT USING MULTIPLE APPLICATION SEGMENTS</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>US 7,039,869 B2</td>
+      <td>Global lab software</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p><a href="http://www.preforma-project.eu/">Preforma website</a> <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p><a href="http://wiki.opf-labs.org/display/SP/Policy+Elements">SCAPE Policy Elements</a> <a href="#fnref:2" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:3">
+      <p><a href="http://www.digitalmeetsculture.net/wp-content/uploads/2014/06/PREFORMA\_Challenge-Brief\_v1.0.pdf">Preforma Challenge Brief</a> <a href="#fnref:3" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:4">
+      <p><a href="images/specificationTIFF.pdf">Preservation-safe TIFF specification</a> <a href="#fnref:4" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:5">
+      <p><a href="http://www.loc.gov/standards/premis/">PREMIS</a> is a data dictionary for Preservation metadata. It describes the metadata needed to support long-term preservation. Because changes are made to the original files the changes need to be documented for long-term preservation. <a href="#fnref:5" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:6">
+      <p>SIP stands for Submission Information Package. This is a term of the information model from the <a href="http://public.ccsds.org/publications/archive/650x0m2.pdf">OAIS framework</a>. This framework is a reference model that describes an archive <a href="#fnref:6" class="reversefootnote">&#8617;</a> <a href="#fnref:6:1" class="reversefootnote">&#8617;<sup>2</sup></a></p>
+    </li>
+    <li id="fn:7">
+      <p><a href="http://www.loc.gov/standards/mix/">MIX</a> <a href="#fnref:7" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:8">
+      <p>The files are available at <a href="https://github.com/openpreserve/policies/">https://github.com/openpreserve/policies/</a> <a href="#fnref:8" class="reversefootnote">&#8617;</a> <a href="#fnref:8:1" class="reversefootnote">&#8617;<sup>2</sup></a></p>
+    </li>
+    <li id="fn:9">
+      <p>This is based on the DCC Life Cycle model. Stages are: Description and Representation Information, Preservation Planning, Community Watch and Participation, Curate and Preserve, Conceptualise, Create or Receive,   Appraise and Select, Ingest, Preservation Action, Store, Access, Use and Reuse, Transform, Dispose, Reappraise, Migrate <a href="#fnref:9" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:10">
+      <p>Stakeholders are defined according to the SHAMAN project: Producer/ Depositor, Consumer, Management, Executive Management, Information Manager, Technology Manager, Operational Manager, Regulator, Auditor, Information Operator, System Architect, Solution Provider, Technology Operator <a href="#fnref:10" class="reversefootnote">&#8617;</a></p>
+    </li>
+    <li id="fn:12">
+      <p>For metadata fields see Implementation of preservation policies <a href="#fnref:12" class="reversefootnote">&#8617;</a> <a href="#fnref:12:1" class="reversefootnote">&#8617;<sup>2</sup></a></p>
+    </li>
+    <li id="fn:14">
+      <p>The maturity levels refer to the levels defined by Charles Dollar and Lori Ashley <a href="#fnref:14" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+    </section>
+        </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Created by <a href="http://www.libis.be/">LIBIS</a> and <a href="http://www.awaresystems.be/">AWare Systems</a></p>
+        <p class="copyright">All deliverables are available under the Attribution-ShareAlike 2.0 Generic (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>)</p>
+        <p><a href="http://www.libis.be/"><img src="http://www.libis.be/libis/themes/LIBIS_2/images/libis_logo.jpg" alt="Homepage LIBIS" width="100"></a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-57374457-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>

@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="LIBIS/AWare conformance checker for TIFF">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>LIBIS/AWare conformance checker&#58; Technical design</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/preformatiff/TiffGuide">View on GitHub</a>
+
+          <h1 id="project_title">LIBIS/AWare conformance checker&#58; Technical design</h1>
+          <h2 id="project_tagline"></h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+    <div class="inner">
+	<p>Download <a href="functionalAnalysis.html">Functional analysis</a>&#58; (<a href="images/PreformaFunctionalAnalysis.odt">odt</a>/<a href="images/PreformaFunctionalAnalysis.pdf">pdf</a>)</p>
+	<p>Download <a href="technicalDesign.html">Technical design</a>&#58; (<a href="images/PreformaTechnicalDesign.odt">odt</a>/<a href="images/PreformaTechnicalDesign.pdf">pdf</a>)</p>
+	<p>Download TIFF specification&#58; (<a href="images/specificationTIFF.odt">odt</a>/<a href="images/specificationTIFF.pdf">pdf</a>)</p>
+	<p>Download <a href="https://github.com/preformatiff/TiffGuide/tree/master/TIFFA%20testfiles">test files</a></p></div>
+    <section id="main_content" class="inner">
+    <h1 id="introduction">Introduction</h1>
+
+<p>This document describes the technical design of the LIBIS/AWare conformance
+checker. The detailed functional description can be found in the Functional
+analysis. The description in the Functional analysis is not repeated here. The
+two documents need to be read together.</p>
+
+<h1 id="architecture-overview">Architecture overview</h1>
+
+<p><img src="images/Preforma1.png" alt="" /></p>
+
+<p>The solution consists of a “Core” that comprises all business logic required for
+executing the core tasks of the solution, a storage subsystem, a format service
+plug-in subsystem, a command-line module and a REST-API + browser-based GUI
+combination. The Core uses the storage subsystem through an API that abstracts
+the implementation details away from the application. Format specific logic is
+implemented in external modules (plug-ins) and that implement actions abstracted
+in an API.</p>
+
+<p>The Core modules functionality can be addressed directly by a module that
+implements the command-line version of the solution or it can be accessed
+through a HTTP REST API made available by a web server. A graphical version of
+the solution is implemented as a web application that can be accessed locally or
+over the network.</p>
+
+<p>Three configurations are possible:</p>
+
+<ol>
+  <li>
+    <p>Command-line: the Core is accompanied with the command-line module and local
+implementations of the data storage</p>
+  </li>
+  <li>
+    <p>Local GUI: the Core and local implementations of the data storage combined
+with a light-weight HTTP server makes up the configuration. A compatible
+browser is required to access the GUI.</p>
+  </li>
+  <li>
+    <p>Web server application: the Core, an application server and multi-user
+database based storage implementations are combined to form a robust
+multi-user web application that can be accessed by a compatible browser over
+the network.</p>
+  </li>
+</ol>
+
+<h2 id="core">Core</h2>
+
+<p>Each module in the Core implements a well-defined set of functionality and may
+or may not use the storage API and/or Format Plug-in API. Modules may be divided
+into sub-modules to further isolate functional units. Some modules may rely on
+other modules (e.g. to check authorization). Each (sub-) module is implemented
+by a single class. Such class methods may return instances of other classes
+(e.g. an instance of the User class when retrieving user information). Such
+objects live as long as the application holds a reference to it. If the object
+requires persistent state, the object will take care of saving and retrieving
+the state with the help of the storage API. A new instance of the class will
+represent the last saved state of the object.</p>
+
+<p>The following Core modules will exist:</p>
+
+<ul>
+  <li>
+    <p>Administration</p>
+
+    <ul>
+      <li>
+        <p>System configuration</p>
+      </li>
+      <li>
+        <p>User management</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>Reporting</p>
+  </li>
+  <li>
+    <p>Export</p>
+  </li>
+  <li>
+    <p>File management</p>
+  </li>
+  <li>
+    <p>Format Services</p>
+
+    <ul>
+      <li>
+        <p>Identification</p>
+      </li>
+      <li>
+        <p>Extraction</p>
+      </li>
+      <li>
+        <p>Validation</p>
+      </li>
+      <li>
+        <p>Fixing</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>The Storage API provides abstract access to the storage implementation(s) and
+the Format Plug-in API does the same for the Format Plug-ins.</p>
+
+<h2 id="storage-subsystem">Storage subsystem</h2>
+
+<p>The storage subsystem defines a set of storage partitions. Each partition will
+store the data for a particular set of data:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Partition</th>
+      <th>content</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>System</td>
+      <td>All global system configuration parameters. This is the primary configuration storage. It also contains the information about registered format plug-ins.</td>
+    </tr>
+    <tr>
+      <td>User</td>
+      <td>All data regarding registered users. Besides the typical user and log in information, it may also contain user rights and user-related log information.</td>
+    </tr>
+    <tr>
+      <td>Files</td>
+      <td>All files under treatment. Each file may have multiple versions and they are organized in pre-ingest packages. All data stored about a file will be added to the database and linked to the corresponding file version. For each file version the reason, operation(s) performed and time-stamp are recorded.</td>
+    </tr>
+    <tr>
+      <td>Preservation Policy</td>
+      <td>Preservation policy data.</td>
+    </tr>
+    <tr>
+      <td>Format</td>
+      <td>Allowed values and known issues for each supported format. The data will be installed and updated as part of the installation and update of a format plug-in.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Each partition can be implemented as directories and files on a file system,
+collections and documents in a JSON database or tables and records in a RDBMS.</p>
+
+<p>The Storage API abstracts the physical storage in a document oriented way. Data
+interaction is by collections and documents. The content of each document can be
+queried as a Hash. Each module that uses the storage will hide the storage
+abstraction in a concrete object type (e.g. User, Package, File, Policy, etc.).
+The Storage API is intended only for use by the Core modules.</p>
+
+<p>A Storage Manager coordinates the registration and configuration of the storage
+partitions. At start-up the system configuration is read and for each partition
+the storage implementation is instantiated with the correct parameters. Whenever
+a (sub-) module requires services from a given storage partition it gets a
+handle for the storage instance from the Storage Manager. Using the handle the
+module can perform the actions it needs to perform.</p>
+
+<h2 id="format-plug-in-subsystem">Format Plug-in subsystem</h2>
+
+<p>Each supported format will supply a Ruby file that will automatically register
+itself with the Plug-in Manager. The registration consists of supplying basic
+format information and the actions it supports. A wrapper class may be needed
+for auto-registration.</p>
+
+<p>The actions a format plug-in can support are:</p>
+
+<ul>
+  <li>
+    <p>Identification</p>
+  </li>
+  <li>
+    <p>Extraction</p>
+  </li>
+  <li>
+    <p>Validation</p>
+  </li>
+  <li>
+    <p>Fixing</p>
+  </li>
+</ul>
+
+<p>A single plug-in may support multiple formats.</p>
+
+<h1 id="modules">Modules</h1>
+
+<h2 id="administration-module">Administration module</h2>
+
+<p>In this module several operations are grouped that an authorized user will need
+for maintaining the installed program. The module allows an authorized user to
+set and retrieve system configuration parameters.</p>
+
+<p>This module also combines the actions required for authentication and
+authorization of users. System configuration will decide how complex the module
+will be. In case of a command-line program some operations may be dummies.</p>
+
+<p>Actions:</p>
+
+<ul>
+  <li>
+    <p>CRUD Operations on users. User data consists of:</p>
+
+    <ul>
+      <li>
+        <p>log in name</p>
+      </li>
+      <li>
+        <p>password</p>
+      </li>
+      <li>
+        <p>UI language</p>
+      </li>
+      <li>
+        <p>Role</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>Log in</p>
+  </li>
+  <li>
+    <p>Authorization</p>
+  </li>
+  <li>
+    <p>get and recreate API key</p>
+  </li>
+</ul>
+
+<h2 id="file-management">File Management</h2>
+
+<p>The File Management module supports the logic to:</p>
+
+<ul>
+  <li>
+    <p>CRUD Manipulations on a Pre-Ingest Package (PIP)</p>
+  </li>
+  <li>
+    <p>CRUD Manipulations on files in a PIP</p>
+  </li>
+</ul>
+
+<p>Files are expected to exist on the system running the solution. For web
+application deployments an upload functionality will be available. The upload
+functionality has two parts: client side code that allows the user to select
+files, generates the check sums and sends the files in smaller packages to the
+server and server side code that reassembles the packages and checks the check
+sum.</p>
+
+<p>The information stored in the DB about one or more given files can be retrieved
+as structured data in JSON format for further formatting or processing. Besides
+some general file information the report contains format errors and warnings.
+For each error or warning a short description and a link to more detailed
+information (if available) is listed. Severity information may indicate that the
+error can be fixed by a format plug-in.</p>
+
+<p>The result of the conformance checker can be exported. The Web installation will
+generate a (multi-part) ZIP file, but local installations will export into a
+folder structure.</p>
+
+<p>The exported structure will contain the original files in the same structure as
+uploaded. The new files are added as well as a METS file containing for each
+file the check sum, the technical meta-data and PREMIS audit log.</p>
+
+<h2 id="policy-services-module">Policy Services module</h2>
+
+<p>This module supports the storage, retrieval and update of Preservation Policies.
+It will also be possible to check files against any given policy.</p>
+
+<h2 id="test-framework-module">Test framework module</h2>
+
+<p>This module supports the Known Issues Services, Allowed values Services and the
+Ground truth service. The module supports the import and export in the services.
+And also the Ground truth check for the Ground truth service.</p>
+
+<h2 id="reporting-module">Reporting module</h2>
+
+<p>Reporting functionality is added in all places in the system where there is
+relevant information available. In general the report functionality will export
+a data-set in JSON format. This is what the library API and what REST API will
+deliver to the clients. It is up to the client code to format the data. So will
+the GUI be able to present the data in printer-friendly HTML format. Likewise a
+client could allow report data to be downloaded as CSV files ready to be
+imported into Excel.</p>
+
+<h2 id="format-services-module">Format Services module</h2>
+
+<h3 id="identification-sub-module">Identification sub-module</h3>
+
+<p>This module allows the user to identify a given file. The file will be passed to
+all registered format plug-ins that support identification. One or more type
+identifiers may be the result of this operation.</p>
+
+<h3 id="extraction-sub-module">Extraction sub-module</h3>
+
+<p>The extraction operation will call the plug-in to extract the file’s meta-data.
+The meta-data will be linked to the file and stored in the file partition
+storage.</p>
+
+<h3 id="validation-sub-module">Validation sub-module</h3>
+
+<p>If the plug-in provided allowed values, validation of the extracted file
+characteristics will be performed and for each warning or failure an issue will
+be generated and attached to the file information.</p>
+
+<h3 id="fixing-sub-module">Fixing sub-module</h3>
+
+<p>Fixing an error in a given file will generate a new file version in the file
+partition storage. The version information will indicate that the file was
+altered for fixing the given error. If the format plug-in indicates that the
+fixing procedure failed, no new version will be created.</p>
+
+<p>Another operation provided by this sub-module is to convert a file to another
+format. Each format plug-in provides information to the service what format
+conversions it supports. Successful file conversion will result in a new version
+of the file with the report from the plug-in attached.</p>
+
+<h1 id="api-specification">API Specification</h1>
+
+<p>The API exists on two levels:</p>
+
+<p>When using the functionality in a library-context, the client modules call
+methods on classes and use object’s attributes directly. For this a class
+documentation will be provided.</p>
+
+<p><img src="images/Core.png" alt="" /></p>
+
+<p>Likewise for the implementation of storage plug-ins class documentation will be
+provided.</p>
+
+<p><img src="images/Storage.png" alt="" /></p>
+
+<p>The second API level is REST based and provides access based on language and
+platform independent technologies like HTTP and JSON. The usage of the API
+requires a HTTP server, even for local usage. The GUI options will use the REST
+API.</p>
+
+<h2 id="rest-api-summary">REST API summary</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>URL</th>
+      <th>methods</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>/login</td>
+      <td> </td>
+      <td>POST</td>
+    </tr>
+    <tr>
+      <td>/user</td>
+      <td>/</td>
+      <td>GET <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/apikey</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/packages</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/reports</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td>/config</td>
+      <td>/</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td>/parameter</td>
+      <td>/</td>
+      <td>GET  <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td>/package</td>
+      <td>/</td>
+      <td>GET  <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/files</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/export</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td>/file</td>
+      <td>/</td>
+      <td>GET <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/metadata</td>
+      <td>GET <br /> PUT <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/file_characteristic</td>
+      <td>GET <br /> PUT <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/issue</td>
+      <td>GET <br /> PUT <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/analyze</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/reports</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/export</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/convert</td>
+      <td>GET <br /> PUT</td>
+    </tr>
+    <tr>
+      <td>/report</td>
+      <td>/</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/issues</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td>/issue</td>
+      <td>/</td>
+      <td>GET <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/search</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/fix</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/export</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td>/known_issues</td>
+      <td>/</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/update</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/export</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td>/allowed_values</td>
+      <td>/update</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td>/policy</td>
+      <td>/</td>
+      <td>GET <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/check</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/export</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/evaluate</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/guidance_policies</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td>/guidance_policy</td>
+      <td>/</td>
+      <td>GET <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/procedure_policies</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td>/procedure_policy</td>
+      <td>/</td>
+      <td>GET <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/control_policies</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td>/control_policy</td>
+      <td>/</td>
+      <td>GET  <br /> PUT <br /> POST <br /> DELETE</td>
+    </tr>
+    <tr>
+      <td>/ground_truth</td>
+      <td>/</td>
+      <td>GET</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/update</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/export</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/upload</td>
+      <td>PUT</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td>/test</td>
+      <td>PUT</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="technology-overview">Technology overview</h1>
+
+<p>The Core modules will be written in the Ruby language based on the Ruby 2.0
+specification. Currently we are targeting the JRuby 1.7.19 or later run-time
+environment. The JRuby run-time runs on a Java VM (we will target Java SDK 7)
+and allows to combine Java compiled code with Ruby code. Format plug-ins and
+storage plug-ins have therefore an implementation choice of Java or Ruby. It is
+expected that for Java plug-ins a small Ruby wrapper will be needed to ensure
+auto-registration and simplify cross-language communication.</p>
+
+<p>The REST API will be deployed on thin for a local GUI, preferably on torquebox
+for network deployment.</p>
+
+<p>Core module requirements:</p>
+
+<ul>
+  <li>
+    <p>bundler (gem)</p>
+  </li>
+  <li>
+    <p>rake (gem)</p>
+  </li>
+  <li>
+    <p>rspec (gem)</p>
+  </li>
+  <li>
+    <p>json (gem)</p>
+  </li>
+  <li>
+    <p>hashie (gem)</p>
+  </li>
+  <li>
+    <p>nokogiri (gem)</p>
+  </li>
+  <li>
+    <p>activesupport (gem)</p>
+  </li>
+  <li>
+    <p>bcrypt (gem)</p>
+  </li>
+  <li>
+    <p>sidekiq (gem)</p>
+  </li>
+</ul>
+
+<p>Command-line requirements:</p>
+
+<ul>
+  <li>thor (gem)</li>
+</ul>
+
+<p>REST API and documentation:</p>
+
+<ul>
+  <li>
+    <p>sinatra (gem)</p>
+  </li>
+  <li>
+    <p>grape (gem)</p>
+  </li>
+  <li>
+    <p>grape-swagger (gem)</p>
+  </li>
+</ul>
+
+<p>GUI requirements:</p>
+
+<ul>
+  <li>
+    <p>i18n (gem)</p>
+  </li>
+  <li>
+    <p>tzinfo (gem)</p>
+  </li>
+  <li>
+    <p>slim (gem)</p>
+  </li>
+  <li>
+    <p>less (gem)</p>
+  </li>
+  <li>
+    <p>jsBCrypt (JavaScript)</p>
+  </li>
+  <li>
+    <p>AngularJS + Angular Material (JavaScript)</p>
+  </li>
+</ul>
+
+<p>Storage plugin requirements:</p>
+
+<ul>
+  <li>
+    <p>for Ruby plug-ins:</p>
+
+    <ul>
+      <li>
+        <p>sqlite3 (local installation) / mysql2 (web installation)</p>
+      </li>
+      <li>
+        <p>json (local installation) / mongoid (web installation)</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>for Java plug-ins:</p>
+
+    <ul>
+      <li>
+        <p>JDBC drivers for Sqlite3 [Xerial?] (local installation) / MySQL (web
+installation)</p>
+      </li>
+      <li>
+        <p>JSON library (local) / MongoDB Java driver [or Hybernate OGM?] (web)</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>Note: this list is not complete and probably will not be until development is
+done.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Preferred software</strong></th>
+      <th><strong>License preferred software</strong></th>
+      <th><strong>GPL compatible</strong><sup id="fnref:1"><a href="#fn:1" class="footnote">1</a></sup></th>
+      <th><strong>GPLv3/MPLv2 alternative</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Thin</td>
+      <td>Ruby license</td>
+      <td>Yes</td>
+      <td>OpenLiteSpeed, Unicorn, Resin</td>
+    </tr>
+    <tr>
+      <td>Torquebox</td>
+      <td>LGPL + MIT</td>
+      <td>Yes</td>
+      <td>Relicense/Resin</td>
+    </tr>
+    <tr>
+      <td>Bundler</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Rake</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Rspec</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Json</td>
+      <td>Ruby</td>
+      <td>Yes</td>
+      <td>Jsonify ? or oj (MIT)</td>
+    </tr>
+    <tr>
+      <td>Hashie</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Nokogiri</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Activesupport</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Bcrypt</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Sidekiq</td>
+      <td>LGPLv3</td>
+      <td>Yes</td>
+      <td>Also uses Redis (BSD)</td>
+    </tr>
+    <tr>
+      <td>Thor</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Sinatra</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Grape</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>grape-swagger</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>i18n</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Tzinfo</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Slim</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Less</td>
+      <td>Apache 2.0</td>
+      <td>Yes</td>
+      <td>Stylus (MIT; relicense) or Sass (MIT;Relicense)</td>
+    </tr>
+    <tr>
+      <td>jsBCrypt</td>
+      <td>BSD 3-Clause License</td>
+      <td>Yes</td>
+      <td>node.bcrypt.js (MIT; Relicense. But some code is BSD)</td>
+    </tr>
+    <tr>
+      <td>AngularJS</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Angular Material</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>sqlite3</td>
+      <td>Public Domain</td>
+      <td>Yes</td>
+      <td>Relicense</td>
+    </tr>
+    <tr>
+      <td>Sqlite3-ruby</td>
+      <td>BSD-3</td>
+      <td>Yes</td>
+      <td>qoobaa/sqlite3 (MIT; Relicense; this is an old driver and the quality is probably not as good als sqlite3-ruby)</td>
+    </tr>
+    <tr>
+      <td>Xerial</td>
+      <td>Apache 2.0</td>
+      <td>Yes</td>
+      <td>Sqljet (GPLv2)</td>
+    </tr>
+    <tr>
+      <td>mysql2</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense Depends on the use of database. Whitedb is an alternative, but the ruby interface needs to be developed</td>
+    </tr>
+    <tr>
+      <td>Mysql</td>
+      <td>GPLv2</td>
+      <td>Yes</td>
+      <td>Depends on the use of database. Whitedb is an alternative</td>
+    </tr>
+    <tr>
+      <td>MongoDB</td>
+      <td>AGPL</td>
+      <td>Yes</td>
+      <td>Whitedb</td>
+    </tr>
+    <tr>
+      <td>mongo-ruby-driver</td>
+      <td>Apache 2.0</td>
+      <td>Yes</td>
+      <td>Moped (MIT; Relicense)</td>
+    </tr>
+    <tr>
+      <td>mongo-java-driver</td>
+      <td>Apache 2.0</td>
+      <td>Yes</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Mongoid</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense Depends on the use of MongoDB</td>
+    </tr>
+    <tr>
+      <td>Kiqstand</td>
+      <td>MIT</td>
+      <td>Yes</td>
+      <td>Relicense Depends on the use of MongoDB</td>
+    </tr>
+    <tr>
+      <td>Hibernate OGM</td>
+      <td>LGPL</td>
+      <td>Yes</td>
+      <td>Morphia (Java ODM; Apache license)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p><a href="#GPLCompatibleLicenses">https://www.gnu.org/licenses/license-list.html#GPLCompatibleLicenses</a> <a href="#fnref:1" class="reversefootnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+    </section>
+        </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Created by <a href="http://www.libis.be/">LIBIS</a> and <a href="http://www.awaresystems.be/">AWare Systems</a></p>
+        <p class="copyright">All deliverables are available under the Attribution-ShareAlike 2.0 Generic (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>)</p>
+        <p><a href="http://www.libis.be/"><img src="http://www.libis.be/libis/themes/LIBIS_2/images/libis_logo.jpg" alt="Homepage LIBIS" width="100"></a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-57374457-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>

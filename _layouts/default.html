@@ -4,37 +4,43 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="LIBIS/AWare conformance checker">
+    <meta name="description" content="LIBIS/AWare conformance checker for TIFF">
+
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-    <title>Tiffguide</title>
+
+    <title>{{page.title}}</title>
   </head>
+
   <body>
+
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/preformatiff/TiffGuide">View on GitHub</a>
-          <h1 id="project_title">LIBIS/AWare conformance checker</h1>
+
+          <h1 id="project_title">{{page.title}}</h1>
+          <h2 id="project_tagline"></h2>
         </header>
     </div>
 
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-<p>This webpage contains information about the LIBIS/AWare conformance checker for TIFF and is part of the <a href="http://www.preforma-project.eu/">Preforma</a> project</p>
-<p>On this website you will find:
-<ul><li>the <a href="functionalAnalysis.html">Functional Analysis</a> of the LIBIS/AWare conformance checker</li>
-<li>the <a href="technicalDesign.html">Technical Design</a> of the LIBIS/AWare conformance checker</li>
-<li>the identification of preservation and data exchange problems in the TIFF specification. We selected a <a href="images/specificationTIFF.pdf">subset of the TIFF specification</a> that are free from preservation and data exchange problems.</li>
-<li><a href="https://github.com/preformatiff/TiffGuide/tree/master/TIFFA%20testfiles">test files</a> that illustrate the problems identified in the TIFF specification</li></ul>
-      </section>
-    </div>
+    <div class="inner">
+	<p>Download <a href="functionalAnalysis.html">Functional analysis</a>&#58; (<a href="images/PreformaFunctionalAnalysis.odt">odt</a>/<a href="images/PreformaFunctionalAnalysis.pdf">pdf</a>)</p>
+	<p>Download <a href="technicalDesign.html">Technical design</a>&#58; (<a href="images/PreformaTechnicalDesign.odt">odt</a>/<a href="images/PreformaTechnicalDesign.pdf">pdf</a>)</p>
+	<p>Download TIFF specification&#58; (<a href="images/specificationTIFF.odt">odt</a>/<a href="images/specificationTIFF.pdf">pdf</a>)</p>
+	<p>Download <a href="https://github.com/preformatiff/TiffGuide/tree/master/TIFFA%20testfiles">test files</a></p></div>
+    <section id="main_content" class="inner">
+    {{content}}
+    </section>
+        </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
         <p class="copyright">Created by <a href="http://www.libis.be/">LIBIS</a> and <a href="http://www.awaresystems.be/">AWare Systems</a></p>
         <p class="copyright">All deliverables are available under the Attribution-ShareAlike 2.0 Generic (<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>)</p>
-        <p><a href="http://www.libis.be/"><img src="http://www.libis.be/libis/themes/LIBIS_2/images/libis_logo.jpg" alt="Homepage LIBIS" width="100" /></a></p>
+        <p><a href="http://www.libis.be/"><img src="http://www.libis.be/libis/themes/LIBIS_2/images/libis_logo.jpg" alt="Homepage LIBIS" width="100"></a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>

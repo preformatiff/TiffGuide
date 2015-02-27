@@ -1,0 +1,13 @@
+encoding: UTF-8
+gems: [ 'jekyll-pandoc-multiple-formats' ]
+pandoc:
+  skip: false
+  impose: false
+  output: images
+  flags: '--smart --bibliography=ref.bib'
+  site_flags: '--toc'
+  outputs:
+    pdf: '--latex-engine=latex'
+    epub:
+    markdown:
+    odt:
